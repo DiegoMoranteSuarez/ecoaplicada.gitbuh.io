@@ -1,0 +1,81 @@
+---
+title: "Untitled"
+author: "Diego Morante"
+date: "2024-03-29"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(sf)
+library(ggthemes)
+```
+
+## Lectura de Datos CSV
+Se hace la lectura del archivo **.csv** con **read.csv()**, el cual contiene argumentos de la ruta del archivo y el tabulador como separador de las columnas representado por **"\t"**.
+
+```{r}
+cormoran <- read.csv("C:/Users/diego/Documents/ecologia guias/cormoran/databruto.csv", sep="\t")
+```
+## Visualización de los Datos CSV
+Permite visualizar los datos en una tabla en Rstudio.
+```{r}
+view(cormoran)
+```
+
+```{r}
+knitr::kable(cormoran)
+```
+
+Muestra las dimensiones de los datos en números de filas y columnas.
+```{r}
+dim(cormoran)
+```
+**sort()** Permite ordenar los nombres de los campos **names()** categoricos de los datos.
+```{r}
+sort(names(cormoran))
+```
+
+**Unique()** Muestra los datos sin repetir los elementos de una columna especifica **data$columna**
+```{r}
+unique(cormoran$countryCode)
+unique(cormoran$decimalLatitude)
+unique(cormoran$decimalLongitude)
+unique(cormoran$locality)
+```
+
+**Filter()** Es una funcion de la libreria Tydiverse, que ayuda en la filtración de datos guardandolas en una variable.
+```{r}
+library(tidyverse)
+cormoran_filtrado <- filter(cormoran, cormoran$countryCode == "PE")
+dim(cormoran_filtrado)
+```
+
+**subset()** Es una funcion que recorta los datos, en función de una seleccion, en este ejemplo la seleccion es hacia los datos vacios o NA por medio de **is.na()**, el cual se invierte si se le agrega **!** en la izquierda, seleccionando finalmente los datos no vacios.
+
+Con esto, conseguimos una limpieza de los datos, con respecto a su georeferenciación, el cual se verifica con la variacion del numero de filas de la data con la funcion **dim()**.
+```{r}
+cormoran_cortado <- subset(cormoran_filtrado, !is.na(decimalLongitude))
+dim(cormoran_cortado)  
+```
+
+Por ultimo, exportamos los datos por medio con la función **write.csv()** especificando la variable que contiene la data y la ruta de guardado
+```{r}
+write.csv(cormoran_cortado,"C:/Users/diego/Documents/ecologia guias/cormoran/datafiltrada.csv")
+```
+
+## Grafica de los puntos
+
+
+```{r}
+departamento <- read_sf("C:/Users/diego/Documents/ecologia guias/shapefiles de departamentos/DEPARTAMENTOS.shp")
+ggplot() + 
+  geom_sf(data = departamento, color = "white", aes(fill= DEPARTAMEN)) +
+  geom_point(data = cormoran_cortado, aes(x = cormoran_cortado$decimalLongitude, y = cormoran_cortado$decimalLatitude), color="black") + 
+  labs(x="Longitud", y="Latitud", title="Phalacrocorax bougainvillii") 
+  
+  
+```
+

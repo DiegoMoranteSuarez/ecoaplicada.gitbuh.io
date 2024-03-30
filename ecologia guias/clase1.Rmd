@@ -1,0 +1,112 @@
+---
+title: "Clase 1 Ecología Aplicada - Anggelo Tena"
+author: "Diego Morante"
+date: "2024-03-29"
+output: 
+  html_document:
+    code_folding: show
+    copy_code: true
+    theme: journal
+    toc: yes
+    toc_float: yes
+---
+
+## Datos
+
+Los datos utilizados se descargaron de [GBIF](https://www.gbif.org/es/occurrence/search), una red internacional e infraestructura de datos de acceso abierto que ofrece información de biodiversidad de las formmas de vida en la tierra.
+
+* Acceder con una cuenta de usuario.
+* Ir a Datos y dar clic a Registro de presencia.
+* En el buscardor, porner el nombre cientifico de la especie, en este caso el Cormorán Guanay ***Phalacrocorax bougainvillii***.
+* Agregamos un filtro, en este caso **Perú** .
+* En el Visor del Registro de Presencia, le damos a descargar.
+* Por último, le damos al boton ***.csv***
+
+
+![Cormorán](C:/Users/diego/Documents/ecologia guias/cormoran/cormoran.jpg) 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(sf)
+library(DT)
+library(dplyr)
+```
+
+## Lectura de Datos CSV
+
+Se hace la lectura del archivo **.csv** con **read.csv()**, el cual contiene argumentos de la ruta del archivo y el tabulador como separador de las columnas representado por **"\t"**.
+
+```{r}
+cormoran <- read.csv("C:/Users/diego/Documents/ecologia guias/cormoran/databruto.csv", sep="\t")
+```
+## Visualización de los Datos CSV
+Permite visualizar los datos en una tabla en Rstudio.
+```{r}
+view(cormoran)
+```
+
+```{r, echo = FALSE}
+cormoran_tabla <- cormoran %>% select(stateProvince, decimalLatitude, decimalLongitude, day, month, year)
+datatable(cormoran_tabla ,class="cell-border hover")
+```
+Muestra las dimensiones de los datos en números de filas y columnas.
+```{r}
+dim(cormoran)
+```
+**sort()** Permite mostrar de manera ordenada los nombres de los campos **names()** categoricos de los datos.
+```{r}
+sort(names(cormoran))
+```
+
+**Unique()** Muestra los datos sin repetir los elementos de una columna especifica **data$columna**
+```{r}
+unique(cormoran$countryCode)
+unique(cormoran$decimalLatitude)
+unique(cormoran$decimalLongitude)
+unique(cormoran$locality)
+```
+
+**Filter()** Es una funcion de la libreria Tydiverse, que ayuda en la filtración de datos guardandolas en una variable.
+
+```{r}
+library(tidyverse)
+cormoran_filtrado <- filter(cormoran, cormoran$countryCode == "PE")
+dim(cormoran_filtrado)
+```
+
+**subset()** Es una funcion que recorta los datos, en función de una seleccion, en este ejemplo la seleccion es hacia los datos vacios o NA por medio de **is.na()**, el cual se invierte si se le agrega **!** en la izquierda, seleccionando finalmente los datos no vacios.
+
+Con esto, conseguimos una limpieza de los datos, con respecto al campo de coordenadas **decimalLongitude**, el cual se verifica con la variacion del numero de filas de la data con la funcion **dim()**.
+```{r}
+cormoran_cortado <- subset(cormoran_filtrado, !is.na(decimalLongitude))
+dim(cormoran_cortado)  
+```
+
+```{r, echo = FALSE}
+cormoran_cortado_tabla <- cormoran_cortado %>% select(stateProvince, decimalLatitude, decimalLongitude, day, month, year)
+datatable(cormoran_cortado_tabla ,class="cell-border hover")
+```
+
+Por último, exportamos los datos por medio con la función **write.csv()** especificando la variable que contiene la data y la ruta de guardado.
+```{r}
+write.csv(cormoran_cortado,"C:/Users/diego/Documents/ecologia guias/cormoran/datafiltrada.csv")
+```
+
+
+## Grafica de los puntos
+En el siguiente codigo se grafica los puntos de distribución del Cormoran de Guanay o Pato de Mar (***Phalacrocorax bougainvillii***) en el Perú.
+
+```{r}
+departamento <- read_sf("C:/Users/diego/Documents/ecologia guias/shapefiles de departamentos/DEPARTAMENTOS.shp")
+ggplot() + 
+  geom_sf(data = departamento, color = "white", aes(fill= DEPARTAMEN)) +
+  geom_point(data = cormoran_cortado, aes(x = cormoran_cortado$decimalLongitude, y = cormoran_cortado$decimalLatitude), color="black") + 
+  labs(x="Longitud", y="Latitud", title="Phalacrocorax bougainvillii") 
+  
+  
+```
+
+
+
